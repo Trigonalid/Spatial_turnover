@@ -1,0 +1,4 @@
+"threshold","n_combinations","n_localities","n_caterpillars","total_reared","total_parasit"
+"N_total >= 5",463,8,140,23251,2539
+"N_total >= 10",338,8,105,22430,2474
+"N_total >= 20",238,8,76,21066,2357

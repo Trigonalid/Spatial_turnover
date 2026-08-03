@@ -1,0 +1,5 @@
+"n_par_cat","n_combinations","mean_parasitism","sd_parasitism","median_parasitism","mean_N_total"
+"0 parasitoids",91,0,0,0,30.484
+"1 parasitoid",77,0.076,0.073,0.059,36.325
+"2 parasitoids",49,0.139,0.109,0.118,46.898
+"3+ parasitoids",121,0.168,0.141,0.14,120.339

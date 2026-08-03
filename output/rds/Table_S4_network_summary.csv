@@ -1,0 +1,22 @@
+"dataset","type","metric","mean","sd"
+"Parasitoid-Caterpillar","All data","OS",0.126,0.048
+"Parasitoid-Caterpillar","All data","ST",0.733,0.063
+"Parasitoid-Caterpillar","All data","WN",0.859,0.038
+"Caterpillar-Plant","All data","OS",0.123,0.03
+"Caterpillar-Plant","All data","ST",0.6,0.083
+"Caterpillar-Plant","All data","WN",0.723,0.069
+"Parasitoid-Caterpillar","Common caterpillars only","OS",0.135,0.049
+"Parasitoid-Caterpillar","Common caterpillars only","ST",0.71,0.065
+"Parasitoid-Caterpillar","Common caterpillars only","WN",0.845,0.041
+"Caterpillar-Plant","Common caterpillars only","OS",0.146,0.041
+"Caterpillar-Plant","Common caterpillars only","ST",0.452,0.104
+"Caterpillar-Plant","Common caterpillars only","WN",0.597,0.091
+"Parasitoid-Caterpillar","Common plants only","OS",0.098,0.043
+"Parasitoid-Caterpillar","Common plants only","ST",0.751,0.066
+"Parasitoid-Caterpillar","Common plants only","WN",0.849,0.044
+"Caterpillar-Plant","Common plants only","OS",0.092,0.034
+"Caterpillar-Plant","Common plants only","ST",0.526,0.074
+"Caterpillar-Plant","Common plants only","WN",0.618,0.061
+"Caterpillar-Plant subsampled","Subsampled","OS",0.098,0.03
+"Caterpillar-Plant subsampled","Subsampled","ST",0.654,0.08
+"Caterpillar-Plant subsampled","Subsampled","WN",0.752,0.062

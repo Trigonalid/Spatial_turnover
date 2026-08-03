@@ -1,0 +1,10 @@
+"threshold","term","estimate","std.error","statistic","p.value"
+"N_total >= 10 (main)","(Intercept)",-1.9502,0.1957,-9.9629,0
+"N_total >= 10 (main)","N_par_species",0.226,0.0112,20.2074,0
+"N_total >= 10 (main)","logN",-0.3243,0.0449,-7.2288,0
+"N_total >= 5 (liberal)","(Intercept)",-2.0178,0.1683,-11.9883,0
+"N_total >= 5 (liberal)","N_par_species",0.2294,0.011,20.8783,0
+"N_total >= 5 (liberal)","logN",-0.3219,0.039,-8.2576,0
+"N_total >= 20 (strict)","(Intercept)",-1.91,0.2357,-8.1023,0
+"N_total >= 20 (strict)","N_par_species",0.2152,0.0115,18.6858,0
+"N_total >= 20 (strict)","logN",-0.3144,0.0526,-5.9747,0
