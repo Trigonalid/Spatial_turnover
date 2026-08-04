@@ -1,0 +1,549 @@
+
+
+#include "headGK.h"
+
+// Random number generator setup using Mersenne Twister
+std::random_device rg; // Hardware-based seed
+std::mt19937 gen(rg()); // Mersenne Twister engine
+
+/* Parameters and global variables for the metacommunity simulation */
+Pars pa; // Stores model parameters (e.g., extinction rates, dispersal distances)
+Times ti; // Time-related settings (e.g., simulation duration, recording interval)
+ostringstream os; // For constructing output file names
+ofstream run; // Output file stream for run data
+std::clock_t star; // Tracks simulation start time
+vector<Patch> pat; // Vector of patches in the metacommunity
+totals to; // Aggregates colonization and extinction rates
+ofstream logfile; // Output file for logging patch states
+
+int main(void) {
+    // Read simulation parameters from standard input
+    cin >> ti.interval; // Time step interval
+    cin >> ti.totalruntime; // Maximum runtime in seconds
+    cin >> ti.maxT; // Maximum simulation time steps
+    cin >> ti.rec; // Recording interval
+    cin >> ti.N; // Number of simulation replicates
+    cin >> pa.set; // Simulation set identifier
+    cin >> pa.delta; // Effect of parasitoid load on host extinction
+    cin >> pa.gamma; // Effect of hosts on parasitoid extinction
+    cin >> pa.U; // Spatial domain size (square side length)
+    cin >> pa.numvil; // Number of patches
+    cin >> pa.pcol; // Parasitoid colonization mode (0: fixed, 1: density-dependent)
+    cin >> pa.hostfile; // File with host species data
+    cin >> pa.parafile; // File with parasitoid species data
+
+    /* Read host species data from CSV file */
+    std::ifstream file(pa.hostfile);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open host file." << std::endl;
+        return 1;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream ss(line);
+        std::string element;
+        std::vector<std::string> currentRow;
+
+        // Split CSV line into elements
+        while (std::getline(ss, element, ',')) {
+            currentRow.push_back(element);
+        }
+        if (currentRow.size() < 3) {
+            continue; // Skip malformed rows
+        }
+        try {
+            // Store host extinction rate, colonization rate, and dispersal distance
+            pa.xH.push_back(std::stod(currentRow[0]));
+            pa.mH.push_back(std::stod(currentRow[1]));
+            pa.LH.push_back(std::stod(currentRow[2]));
+            // Store parasitoid interactions for this host
+            std::vector<int> rowSpecific;
+            for (size_t i = 3; i < currentRow.size(); ++i) {
+                rowSpecific.push_back(std::stoi(currentRow[i]));
+            }
+            pa.HostPara.push_back(rowSpecific);
+        } catch (const std::invalid_argument& e) {
+            std::cerr << "Error: Invalid number format in row." << std::endl;
+            continue;
+        }
+    }
+    file.close();
+
+    /* Read parasitoid species data from CSV file */
+    file.open(pa.parafile);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open para file." << std::endl;
+        return 1;
+    }
+    while (std::getline(file, line)) {
+        std::istringstream ss(line);
+        std::string element;
+        std::vector<std::string> currentRow;
+
+        // Split CSV line into elements
+        while (std::getline(ss, element, ',')) {
+            currentRow.push_back(element);
+        }
+        if (currentRow.size() < 3) {
+            continue; // Skip malformed rows
+        }
+        try {
+            // Store parasitoid extinction rate, colonization rate, and dispersal distance
+            pa.xP.push_back(std::stod(currentRow[0]));
+            pa.mP.push_back(std::stod(currentRow[1]));
+            pa.LP.push_back(std::stod(currentRow[2]));
+            // Store host interactions for this parasitoid
+            std::vector<int> rowSpecific;
+            for (size_t i = 3; i < currentRow.size(); ++i) {
+                rowSpecific.push_back(std::stoi(currentRow[i]));
+            }
+            pa.ParaHosts.push_back(rowSpecific);
+        } catch (const std::invalid_argument& e) {
+            std::cerr << "Error: Invalid number format in row." << std::endl;
+            continue;
+        }
+    }
+    file.close();
+
+    // Set number of host and parasitoid species
+    pa.H = pa.xH.size();
+    pa.P = pa.xP.size();
+
+    star = std::clock(); // Record start time
+    RunNReps(ti.N); // Run simulation replicates
+    return 0;
+}
+
+// Run simulation for N replicates
+void RunNReps(int N) {
+    for (int i = 0; i < N; i++) {
+        // Create output file for this replicate
+        ostringstream os;
+        os << "LocalData" << pa.set << "N" << i << ".txt";
+        logfile.open(os.str().c_str());
+        Initiate(); // Initialize patches and populations
+        RunMaxT(i); // Run simulation for max time steps
+        os.str("");
+        logfile.close();
+    }
+}
+
+// Run simulation for one replicate up to maxT time steps
+void RunMaxT(int i) {
+    double T = 0; // Current time
+    int TT = 0; // Discrete time steps
+    int TTT = 0; // Time since last recording
+
+    // Track total hosts and parasitoids per species
+    vector<int> PTot(pa.P, 0);
+    vector<int> HTot(pa.H, 0);
+    for (int i = 0; i < pat.size(); i++) {
+        for (int p = 0; p < pa.P; ++p) {
+            if (pat[i].Ppres[p] == 1) PTot[p]++; // Count parasitoids
+        }
+        for (int h = 0; h < pa.H; ++h) {
+            if (pat[i].Hpres[h] == 1) HTot[h]++; // Count hosts
+        }
+    }
+    // Round small values to zero
+    to.Pcol = chop(to.Pcol);
+    to.Hcol = chop(to.Hcol);
+    to.Pext = chop(to.Pext);
+    to.Hext = chop(to.Hext);
+
+    // Output initial state
+    cout << TT;
+    for (int hos = 0; hos < pa.H; hos++) cout << "    " << HTot[hos];
+    for (int par = 0; par < pa.P; par++) cout << "    " << PTot[par];
+    cout << "    " << to.Hcol << "    " << to.Hext << "    " << to.Pcol << "    " << to.Pext << endl;
+
+    // Main simulation loop
+    while (TT < ti.maxT) {
+        T = RunOnceInt(ti.interval - T); // Run for one interval
+        TT += ti.interval;
+        TTT += ti.interval;
+        if (TTT >= ti.rec) {
+            record(TT); // Record state at specified intervals
+            TTT -= ti.rec;
+        }
+        // Update population counts
+        for (int p = 0; p < pa.P; ++p) PTot[p] = 0;
+        for (int h = 0; h < pa.H; ++h) HTot[h] = 0;
+        for (int i = 0; i < pat.size(); i++) {
+            for (int p = 0; p < pa.P; ++p) {
+                if (pat[i].Ppres[p] == 1) PTot[p]++;
+            }
+            for (int h = 0; h < pa.H; ++h) {
+                if (pat[i].Hpres[h] == 1) HTot[h]++;
+            }
+        }
+        // Round small values
+        to.Pcol = chop(to.Pcol);
+        to.Hcol = chop(to.Hcol);
+        to.Pext = chop(to.Pext);
+        to.Hext = chop(to.Hext);
+
+        // Output current state
+        cout << TT;
+        for (int hos = 0; hos < pa.H; hos++) cout << "    " << HTot[hos];
+        for (int par = 0; par < pa.P; par++) cout << "    " << PTot[par];
+        cout << "    " << to.Hcol << "    " << to.Hext << "    " << to.Pcol << "    " << to.Pext << endl;
+    }
+}
+
+// Run one time interval with stochastic events
+double RunOnceInt(double interval) {
+    double T = 0;
+    double dt;
+    while (T < interval) {
+        dt = OneStep(); // Perform one event (colonization or extinction)
+        T += dt;
+    }
+    // Check if simulation exceeds time limit
+    if ((std::clock() - star) / (double)CLOCKS_PER_SEC > 0.9 * ti.totalruntime) {
+        exit(1);
+    }
+    return T - interval;
+}
+
+// Initialize patches and populations
+void Initiate() {
+    to.Pcol = 0; // Reset total parasitoid colonization rate
+    to.Hcol = 0; // Reset total host colonization rate
+    to.Pext = 0; // Reset total parasitoid extinction rate
+    to.Hext = 0; // Reset total host extinction rate
+
+    // Create patches with random spatial coordinates
+    for (int i = 0; i < pa.numvil; ++i) {
+        Patch pp;
+        pp.x = pa.U * Random(); // Random x-coordinate
+        pp.y = pa.U * Random(); // Random y-coordinate
+        pp.Hpres.resize(pa.H, 0); // Host presence
+        pp.Hcol.resize(pa.H, 0); // Host colonization rates
+        pp.Hext.resize(pa.H, 0); // Host extinction rates
+        pp.Ppres.resize(pa.P, 0); // Parasitoid presence
+        pp.Pcol.resize(pa.P, 0); // Parasitoid colonization counts
+        pp.PcolDub.resize(pa.P, 0); // Parasitoid colonization rates
+        pp.Pext.resize(pa.P, 0); // Parasitoid extinction counts
+        pp.PextDub.resize(pa.P, 0); // Parasitoid extinction rates
+        pp.HconnecIND.resize(pa.H); // Host connectivity indices
+        pp.PconnecIND.resize(pa.P); // Parasitoid connectivity indices
+        pat.push_back(pp);
+    }
+
+    // Calculate connectivities based on dispersal distances
+    for (int i = 0; i < pat.size(); i++) {
+        for (int ii = 0; ii < pat.size(); ii++) {
+            double dd = distance(pa.U, pat[i].x, pat[i].y, pat[ii].x, pat[ii].y);
+            for (int h = 0; h < pa.H; ++h) {
+                if (i != ii && dd < pa.LH[h]) pat[i].HconnecIND[h].push_back(ii);
+            }
+            for (int p = 0; p < pa.P; ++p) {
+                if (i != ii && dd < pa.LP[p]) pat[i].PconnecIND[p].push_back(ii);
+            }
+        }
+    }
+
+    // Initialize host populations
+    for (int i = 0; i < pat.size(); i++) {
+        for (int h = 0; h < pa.H; ++h) {
+            HColonisation(i, h); // Colonize hosts
+        }
+    }
+
+    // Initialize parasitoid populations
+    for (int i = 0; i < pat.size(); i++) {
+        for (int p = 0; p < pa.P; ++p) {
+            PColonisation(i, p); // Colonize parasitoids
+        }
+    }
+
+    UpdatePext(); // Update parasitoid extinction rates
+    UpdatePcol(); // Update parasitoid colonization rates
+}
+
+// Handle host colonization in patch i for host species h
+void HColonisation(int i, int h) {
+    to.Hcol -= pat[i].Hcol[h]; // Remove old colonization rate
+    pat[i].Hcol[h] = 0; // Reset colonization rate
+    pat[i].Hext[h] = pa.xH[h]; // Set baseline extinction rate
+    to.Hext += pa.xH[h]; // Update total extinction rate
+    pat[i].Hpres[h] = 1; // Mark host as present
+
+    // Adjust extinction rates for parasitoid interactions
+    for (int p = 0; p < pa.HostPara[h].size(); p++) {
+        int para = pa.HostPara[h][p];
+        if (pat[i].Ppres[para] == 1) {
+            pat[i].Pext[para]++; // Increment parasitoid extinction count
+            pat[i].Hext[h] += pa.delta; // Increase host extinction due to parasitoid
+            to.Hext += pa.delta;
+        }
+    }
+
+    // Update colonization rates in connected patches
+    for (int j = 0; j < pat[i].HconnecIND[h].size(); j++) {
+        int site = pat[i].HconnecIND[h][j];
+        if (pat[site].Hpres[h] == 0) {
+            pat[site].Hcol[h] += pa.mH[h]; // Add colonization pressure
+            to.Hcol += pa.mH[h];
+        }
+    }
+
+    // Update parasitoid colonization rates
+    for (int p = 0; p < pa.HostPara[h].size(); p++) {
+        int para = pa.HostPara[h][p];
+        for (int j = 0; j < pat[i].PconnecIND[para].size(); j++) {
+            int site = pat[i].PconnecIND[para][j];
+            if (pat[i].Ppres[para] == 0 && pat[site].Ppres[para] == 1) {
+                pat[i].Pcol[para]++; // Increment parasitoid colonization count
+            }
+        }
+    }
+}
+
+// Handle host extinction in patch i for host species h
+void HExtinguish(int i, int h) {
+    pat[i].Hcol[h] = 0; // Reset colonization rate
+    pat[i].Hpres[h] = 0; // Mark host as absent
+    to.Hext -= pat[i].Hext[h]; // Remove extinction rate
+    pat[i].Hext[h] = 0;
+
+    // Adjust parasitoid extinction rates
+    for (int p = 0; p < pa.HostPara[h].size(); p++) {
+        int para = pa.HostPara[h][p];
+        if (pat[i].Ppres[para] == 1) {
+            pat[i].Pext[para]--; // Decrement parasitoid extinction count
+        }
+    }
+
+    // Update colonization rates in connected patches
+    for (int j = 0; j < pat[i].HconnecIND[h].size(); j++) {
+        int site = pat[i].HconnecIND[h][j];
+        if (pat[site].Hpres[h] == 0) {
+            pat[site].Hcol[h] -= pa.mH[h]; // Remove colonization pressure
+            to.Hcol -= pa.mH[h];
+        }
+        if (pat[site].Hpres[h] == 1) {
+            pat[i].Hcol[h] += pa.mH[h]; // Add colonization pressure to current patch
+            to.Hcol += pa.mH[h];
+        }
+    }
+
+    // Update parasitoid colonization rates
+    for (int p = 0; p < pa.HostPara[h].size(); p++) {
+        int para = pa.HostPara[h][p];
+        for (int j = 0; j < pat[i].PconnecIND[para].size(); j++) {
+            int site = pat[i].PconnecIND[para][j];
+            if (pat[i].Ppres[para] == 0 && pat[site].Ppres[para] == 1) {
+                pat[i].Pcol[para]--; // Decrement parasitoid colonization count
+            }
+        }
+    }
+}
+
+// Handle parasitoid colonization in patch i for parasitoid species p
+void PColonisation(int i, int p) {
+    pat[i].Pcol[p] = 0; // Reset colonization count
+    pat[i].Ppres[p] = 1; // Mark parasitoid as present
+
+    // Adjust extinction rates for host interactions
+    for (int h = 0; h < pa.ParaHosts[p].size(); h++) {
+        int host = pa.ParaHosts[p][h];
+        if (pat[i].Hpres[host] == 1) {
+            pat[i].Pext[p]++; // Increment parasitoid extinction count
+            pat[i].Hext[host] += pa.delta; // Increase host extinction rate
+            to.Hext += pa.delta;
+        }
+    }
+
+    // Update colonization rates in connected patches
+    for (int j = 0; j < pat[i].PconnecIND[p].size(); j++) {
+        int site = pat[i].PconnecIND[p][j];
+        if (pat[site].Ppres[p] == 0) {
+            for (int h = 0; h < pa.ParaHosts[p].size(); h++) {
+                int host = pa.ParaHosts[p][h];
+                if (pat[site].Hpres[host] == 1) {
+                    pat[site].Pcol[p]++; // Increment colonization count
+                }
+            }
+        }
+    }
+}
+
+// Handle parasitoid extinction in patch i for parasitoid species p
+void PExtinguish(int i, int p) {
+    pat[i].Pcol[p] = 0; // Reset colonization count
+    pat[i].Ppres[p] = 0; // Mark parasitoid as absent
+    pat[i].Pext[p] = 0; // Reset extinction count
+    pat[i].PextDub[p] = 0; // Reset extinction rate
+
+    // Adjust host extinction rates
+    for (int h = 0; h < pa.ParaHosts[p].size(); h++) {
+        int host = pa.ParaHosts[p][h];
+        if (pat[i].Hpres[host] == 1) {
+            pat[i].Hext[host] -= pa.delta; // Decrease host extinction rate
+            to.Hext -= pa.delta;
+        }
+    }
+
+    // Update colonization rates in connected patches
+    for (int j = 0; j < pat[i].PconnecIND[p].size(); j++) {
+        int site = pat[i].PconnecIND[p][j];
+        if (pat[site].Ppres[p] == 0) {
+            for (int h = 0; h < pa.ParaHosts[p].size(); h++) {
+                int host = pa.ParaHosts[p][h];
+                if (pat[site].Hpres[host] == 1) {
+                    pat[site].Pcol[p]--; // Decrement colonization count
+                }
+            }
+        }
+        if (pat[site].Ppres[p] == 1) {
+            for (int h = 0; h < pa.ParaHosts[p].size(); h++) {
+                int host = pa.ParaHosts[p][h];
+                if (pat[i].Hpres[host] == 1) {
+                    pat[i].Pcol[p]++; // Increment colonization count
+                }
+            }
+        }
+    }
+}
+
+// Update parasitoid extinction rates across all patches
+void UpdatePext() {
+    to.Pext = 0; // Reset total extinction rate
+    for (int i = 0; i < pat.size(); i++) {
+        for (int p = 0; p < pa.P; ++p) {
+            if (pat[i].Ppres[p] == 1) {
+                if (pat[i].Pext[p] == 0) {
+                    PExtinguish(i, p); // Extinguish if no hosts support parasitoid
+                } else {
+                    // Calculate extinction rate with host dependence
+                    pat[i].PextDub[p] = pa.xP[p] + pa.gamma / (1.0 * pat[i].Pext[p]);
+                    to.Pext += pat[i].PextDub[p];
+                }
+            }
+        }
+    }
+}
+
+// Update parasitoid colonization rates across all patches
+void UpdatePcol() {
+    to.Pcol = 0; // Reset total colonization rate
+    for (int i = 0; i < pat.size(); i++) {
+        for (int p = 0; p < pa.P; ++p) {
+            if (pat[i].Pcol[p] <= 0) {
+                pat[i].PcolDub[p] = 0; // No colonization if count is zero
+            } else {
+                if (pa.pcol == 0) {
+                    pat[i].PcolDub[p] = pa.mP[p]; // Fixed colonization rate
+                    to.Pcol += pa.mP[p];
+                } else if (pa.pcol == 1) {
+                    pat[i].PcolDub[p] = pat[i].Pcol[p] * pa.mP[p]; // Density-dependent rate
+                    to.Pcol += pat[i].Pcol[p] * pa.mP[p];
+                }
+            }
+        }
+    }
+}
+
+// Perform one stochastic event (Gillespie algorithm)
+double OneStep() {
+    vector<double> rate = {to.Pcol, to.Hext, to.Pext, to.Hcol}; // Event rates
+    double sum = rate[0] + rate[1] + rate[2] + rate[3];
+    double dt;
+    if (sum > 0) {
+        dt = random_exp(sum); // Time to next event
+        int i = pickfromvec(rate); // Choose event type
+        if (i == 0) { // Parasitoid colonization
+            vector<double> PcolPatch;
+            for (int k = 0; k < pat.size(); ++k) {
+                PcolPatch.push_back(accumulate(pat[k].PcolDub.begin(), pat[k].PcolDub.end(), 0.0));
+            }
+            int j = pickfromvec(PcolPatch); // Choose patch
+            int p = pickfromvec(pat[j].PcolDub); // Choose parasitoid
+            PColonisation(j, p);
+        } else if (i == 1) { // Host extinction
+            vector<double> HextPatch;
+            for (int k = 0; k < pat.size(); ++k) {
+                HextPatch.push_back(accumulate(pat[k].Hext.begin(), pat[k].Hext.end(), 0.0));
+            }
+            int j = pickfromvec(HextPatch); // Choose patch
+            int h = pickfromvec(pat[j].Hext); // Choose host
+            HExtinguish(j, h);
+        } else if (i == 2) { // Parasitoid extinction
+            vector<double> PextPatch;
+            for (int k = 0; k < pat.size(); ++k) {
+                PextPatch.push_back(accumulate(pat[k].PextDub.begin(), pat[k].PextDub.end(), 0.0));
+            }
+            int j = pickfromvec(PextPatch); // Choose patch
+            int p = pickfromvec(pat[j].PextDub); // Choose parasitoid
+            PExtinguish(j, p);
+        } else if (i == 3) { // Host colonization
+            vector<double> HcolPatch;
+            for (int k = 0; k < pat.size(); ++k) {
+                HcolPatch.push_back(accumulate(pat[k].Hcol.begin(), pat[k].Hcol.end(), 0.0));
+            }
+            int j = pickfromvec(HcolPatch); // Choose patch
+            int h = pickfromvec(pat[j].Hcol); // Choose host
+            HColonisation(j, h);
+        }
+        UpdatePext(); // Update extinction rates
+        UpdatePcol(); // Update colonization rates
+    } else {
+        dt = 1; // No events possible
+    }
+    return dt;
+}
+
+// Round small values to zero
+double chop(double x) {
+    return (abs(x) > 0.00001) ? x : 0;
+}
+
+// Select an index from a vector based on weighted probabilities
+int pickfromvec(const vector<double>& list) {
+    double sum = accumulate(list.begin(), list.end(), 0.0);
+    int i = 0;
+    double cumu = 0;
+    double ran = Random() * sum;
+    while (cumu <= ran && i < list.size()) {
+        cumu += list[i];
+        i++;
+    }
+    return i - 1;
+}
+
+// Calculate distance with periodic boundary conditions
+double distance(double U, double x1, double y1, double x2, double y2) {
+    double xdist = min(abs(x1 - x2), U - abs(x1 - x2));
+    double ydist = min(abs(y1 - y2), U - abs(y1 - y2));
+    return sqrt(xdist * xdist + ydist * ydist);
+}
+
+// Generate exponential random variable for event timing
+double random_exp(double lambda) {
+    double dd = Random() * 0.9999;
+    return -log(1.0 - dd) / lambda;
+}
+
+// Record patch states to file
+void record(int T) {
+    for (int i = 0; i < pat.size(); ++i) {
+        logfile << T << "    " << pat[i].x << "    " << pat[i].y << "    ";
+        for (int h = 0; h < pa.H; ++h) logfile << pat[i].Hpres[h] << "    ";
+        for (int p = 0; p < pa.P; ++p) logfile << pat[i].Ppres[p] << "    ";
+        logfile << endl;
+    }
+}
+
+// Generate uniform random number [0,1)
+double Random() {
+    std::uniform_real_distribution<> dist(0.0, 1.0);
+    return dist(gen);
+}
+
+// Generate random integer in [a, b]
+int IRandom(int a, int b) {
+    std::uniform_int_distribution<> dist(a, b);
+    return dist(gen);
+}
