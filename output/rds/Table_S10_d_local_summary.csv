@@ -1,0 +1,7 @@
+"variant","network","n_species_obs","d_mean","d_sd","d_median"
+"full","Caterpillar-Plant",1072,0.301,0.203,0.251
+"full","Parasitoid-Caterpillar",554,0.564,0.283,0.58
+"min5_cons","Caterpillar-Plant",789,0.351,0.208,0.322
+"min5_cons","Parasitoid-Caterpillar",317,0.598,0.26,0.591
+"min5_both","Caterpillar-Plant",789,0.351,0.208,0.322
+"min5_both","Parasitoid-Caterpillar",316,0.596,0.26,0.589

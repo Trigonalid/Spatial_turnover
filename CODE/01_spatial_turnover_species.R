@@ -4,11 +4,6 @@
 # Analysis 3: subsampling of caterpillars to parasitoid sample size
 # Outputs: Table S2 (Word) + output/rds/turnover_long.rds (for plotting)
 # Figures are built separately in 01_spatial_turnover_species_plots.R
-# ------------------------------------------------------------
-# METHODS NOTES (keep text in sync):
-#   - Bray-Curtis is computed with {vegan}, NOT {betapart} -> fix in Methods.
-#   - Number of subsamples = 999 (matches code) -> fix "1000" in Methods.
-#   - Mantel / distance-decay is NOT reported -> removed from code.
 # ============================================================
 
 # ------------------------------------------------------------
@@ -34,6 +29,7 @@ library(officer)     # read_docx() for Word export
 # Excel columns are renamed to the short codes used below.
 # guild = "PAR" where PAR_sp is present; otherwise "CAT".
 # Ohu2 excluded (temporal replicate, handled in a separate script).
+
 MASTER <- read_excel(
   here("DATA/MASTER.xlsx"),
   guess_max = 1048576    # scan ALL rows when guessing column types.
@@ -55,10 +51,6 @@ MASTER <- read_excel(
 dir.create("output",     showWarnings = FALSE, recursive = TRUE)
 dir.create("output/rds", showWarnings = FALSE, recursive = TRUE)
 
-# NOTE: geographic distances (Distance.csv) were only needed for Mantel,
-# which is no longer reported. Loading kept commented out in case a
-# distance-decay analysis is added later.
-# Distance <- read.csv2(here("DATA/Distance.csv"), row.names = 1)
 
 # ------------------------------------------------------------
 # 2. Community matrices (site x species)

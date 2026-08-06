@@ -170,4 +170,4 @@ ggsave("output/fig/Figure_S9_parasitism_heatmap.svg", p_heatmap,
 ggsave("output/fig/Figure_S9_parasitism_heatmap.pdf", p_heatmap,
        width = 220, height = 280, units = "mm")
 ggsave("output/fig/Figure_S9_parasitism_heatmap.png", p_heatmap,
-       width = 220, height = 280, units = "mm", dpi = 300)
+       width = 220, height = 300, units = "mm", dpi = 300)

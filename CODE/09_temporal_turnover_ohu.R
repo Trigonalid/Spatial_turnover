@@ -20,7 +20,7 @@
 #   - Subsampling: 999 iterations, set.seed(1234), with replacement.
 #   - Two subsampling schemes: Bray = larger time point down to smaller;
 #     WN = caterpillar-plant down to parasitoid-caterpillar size.
-#     Check the Methods text describes both.
+
 # ============================================================
 
 # ------------------------------------------------------------

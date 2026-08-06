@@ -15,6 +15,14 @@
 #          and output/rds/ files for the plotting script.
 # Figures are built in 04_interaction_turnover_plots.R
 #   (Fig. 1D, Fig. 2, Fig. S7).
+# ------------------------------------------------------------
+# METHODS NOTES (consistent with 01/02):
+#   - Mantel / distance-decay NOT reported (removed). betalinkr already
+#     returns each site-pair once, so no matrix reconstruction is needed.
+#   - Subsampling: 999 iterations, set.seed(1234), with replacement.
+#   - Decomposition uses the common-denominator variant of betalinkr
+#     (ST + OS = WN), building on the Poisot et al. turnover/rewiring
+#     framework -> check the Methods wording matches this.
 # ============================================================
 
 # ------------------------------------------------------------
@@ -247,6 +255,9 @@ print(doc_network, target = "output/Table_S4_network_summary.docx")
 
 # ------------------------------------------------------------
 # 9. Wilcoxon tests (Table S4b) — Word + csv
+# PAIRED Wilcoxon signed-rank tests: values are matched by site-pair (i, j),
+# since both networks are compared over the same pairs of localities.
+# Statistic is V (signed-rank).
 # ------------------------------------------------------------
 wilcox_pairs <- list(
   c("Parasitoid-Caterpillar", "Caterpillar-Plant"),
@@ -254,22 +265,27 @@ wilcox_pairs <- list(
   c("Caterpillar-Plant",      "Caterpillar-Plant subsampled")
 )
 
+fmt_p <- function(p) ifelse(is.na(p), NA_character_,
+                            ifelse(p < 0.001, "<0.001", formatC(p, format = "f", digits = 3)))
+
 wilcox_fw <- purrr::map_df(metrics_keep, function(m) {
   df <- plot_data_main %>% filter(metric == m)
   purrr::map_df(wilcox_pairs, function(pair) {
-    x <- df %>% filter(dataset == pair[1]) %>% pull(value)
-    y <- df %>% filter(dataset == pair[2]) %>% pull(value)
-    if (length(x) < 2 || length(y) < 2) {
-      return(tibble(metric = m, group_1 = pair[1], group_2 = pair[2],
-                    W_statistic = NA_real_, p_value = NA_real_, significance = NA_character_))
+    a <- df %>% filter(dataset == pair[1]) %>% dplyr::select(i, j, value_a = value)
+    b <- df %>% filter(dataset == pair[2]) %>% dplyr::select(i, j, value_b = value)
+    paired_df <- dplyr::inner_join(a, b, by = c("i", "j"))   # align by site-pair
+    if (nrow(paired_df) < 2) {
+      return(tibble(metric = m, group_1 = pair[1], group_2 = pair[2], n_pairs = nrow(paired_df),
+                    V_statistic = NA_real_, p_value = NA_character_, significance = NA_character_))
     }
-    wt <- wilcox.test(x, y, exact = FALSE)
+    wt <- wilcox.test(paired_df$value_a, paired_df$value_b, paired = TRUE, exact = FALSE)
     tibble(
       metric       = m,
       group_1      = pair[1],
       group_2      = pair[2],
-      W_statistic  = round(wt$statistic, 1),
-      p_value      = round(wt$p.value, 4),
+      n_pairs      = nrow(paired_df),
+      V_statistic  = round(wt$statistic, 1),
+      p_value      = fmt_p(wt$p.value),
       significance = case_when(
         wt$p.value < 0.001 ~ "***",
         wt$p.value < 0.01  ~ "**",
@@ -283,7 +299,7 @@ wilcox_fw <- purrr::map_df(metrics_keep, function(m) {
 print(wilcox_fw)
 write.csv(wilcox_fw, "output/rds/Table_S4b_network_wilcoxon.csv", row.names = FALSE)
 doc_wilcox_fw <- officer::read_docx() %>%
-  officer::body_add_par("Table S4b: Wilcoxon tests - network type comparisons",
+  officer::body_add_par("Table S4b: Paired Wilcoxon signed-rank tests - network type comparisons",
                         style = "heading 1") %>%
   flextable::body_add_flextable(flextable(wilcox_fw))
 print(doc_wilcox_fw, target = "output/Table_S4b_network_wilcoxon.docx")

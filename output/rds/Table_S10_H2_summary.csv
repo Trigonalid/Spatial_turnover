@@ -1,0 +1,5 @@
+"variant","network","n_localities","H2_mean","H2_sd"
+"≥5 reared specimens (parasitoids & caterpillars)","Caterpillar-Plant",8,0.842,0.045
+"≥5 reared specimens (parasitoids & caterpillars)","Parasitoid-Caterpillar",8,0.715,0.098
+"All species (no threshold)","Caterpillar-Plant",8,0.843,0.045
+"All species (no threshold)","Parasitoid-Caterpillar",8,0.699,0.098
