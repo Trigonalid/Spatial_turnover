@@ -142,7 +142,7 @@ p_heatmap <- ggplot(heatmap_df,
   scale_fill_manual(values = palette_cb_safe,
                     breaks = names(palette_cb_safe),   # force ALL bins into the legend
                     limits = names(palette_cb_safe),   # full palette as the scale domain
-                    drop = FALSE, na.value = "grey90", na.translate = FALSE,
+                    drop = FALSE, na.value = "grey90", na.translate = TRUE,
                     labels = function(x) gsub("%", "", x)) +
   guides(fill = guide_legend(override.aes = list(alpha = 1, colour = "grey40", linewidth = 0.3))) +
   coord_fixed(ratio = 0.4) +

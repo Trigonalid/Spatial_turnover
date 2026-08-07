@@ -10,9 +10,7 @@
 # Species-inclusion variants (as in Methods):
 #   main        : >= 5 reared specimens -> parasitoids AND caterpillars >= 5
 #                 (plants unrestricted). This is the MAIN analysis / Fig. S10.
-#   no_threshold: all species (no filtering)
-#   conservative: >= 5 specimens for BOTH consumers and resources
-#                 (par-cat: par & cat >= 5; cat-plant: cat & plant >= 5)
+#   no_threshold: all species (no filtering) -> robustness
 # ============================================================
 
 # ------------------------------------------------------------
@@ -81,10 +79,6 @@ data_cat_plant_main <- MASTER %>% filter(!is.na(CAT_sp), !is.na(PLANT_sp), min5_
 data_par_cat_full   <- MASTER %>% filter(!is.na(PAR_sp), !is.na(CAT_sp)) %>% select(locality, PAR_sp, CAT_sp)
 data_cat_plant_full <- MASTER %>% filter(!is.na(CAT_sp), !is.na(PLANT_sp)) %>% select(locality, CAT_sp, PLANT_sp)
 
-# conservative = >= 5 for both consumers and resources
-data_par_cat_cons   <- MASTER %>% filter(!is.na(PAR_sp), !is.na(CAT_sp), min5_par, min5_cat) %>% select(locality, PAR_sp, CAT_sp)
-data_cat_plant_cons <- MASTER %>% filter(!is.na(CAT_sp), !is.na(PLANT_sp), min5_cat, min5_plant) %>% select(locality, CAT_sp, PLANT_sp)
-
 # ------------------------------------------------------------
 # 4. Helpers: build bipartite web + H2' per locality
 # ------------------------------------------------------------
@@ -119,12 +113,10 @@ run_variant <- function(df, row_var, col_var, variant_name, network_name) {
 # 5. H2' per locality (2 networks x 3 variants)
 # ------------------------------------------------------------
 H2_local_all <- bind_rows(
-  run_variant(data_par_cat_full, "CAT_sp",   "PAR_sp", "no_threshold", "Parasitoid-Caterpillar"),
-  run_variant(data_par_cat_main, "CAT_sp",   "PAR_sp", "main",         "Parasitoid-Caterpillar"),
-  run_variant(data_par_cat_cons, "CAT_sp",   "PAR_sp", "conservative", "Parasitoid-Caterpillar"),
-  run_variant(data_cat_plant_full, "PLANT_sp", "CAT_sp", "no_threshold", "Caterpillar-Plant"),
-  run_variant(data_cat_plant_main, "PLANT_sp", "CAT_sp", "main",         "Caterpillar-Plant"),
-  run_variant(data_cat_plant_cons, "PLANT_sp", "CAT_sp", "conservative", "Caterpillar-Plant")
+  run_variant(data_par_cat_main, "CAT_sp",   "PAR_sp", "\u22655 reared specimens (parasitoids & caterpillars)", "Parasitoid-Caterpillar"),
+  run_variant(data_par_cat_full, "CAT_sp",   "PAR_sp", "All species (no threshold)",                          "Parasitoid-Caterpillar"),
+  run_variant(data_cat_plant_main, "PLANT_sp", "CAT_sp", "\u22655 reared specimens (parasitoids & caterpillars)", "Caterpillar-Plant"),
+  run_variant(data_cat_plant_full, "PLANT_sp", "CAT_sp", "All species (no threshold)",                          "Caterpillar-Plant")
 )
 
 saveRDS(H2_local_all, "output/rds/spec_H2_local.rds")
@@ -132,7 +124,8 @@ saveRDS(H2_local_all, "output/rds/spec_H2_local.rds")
 # ------------------------------------------------------------
 # 6. Summary: mean +/- SD H2' per variant x network
 # ------------------------------------------------------------
-variant_levels <- c("no_threshold", "main", "conservative")
+variant_levels <- c("\u22655 reared specimens (parasitoids & caterpillars)",
+                    "All species (no threshold)")
 network_levels <- c("Caterpillar-Plant", "Parasitoid-Caterpillar")
 
 H2_local_summary <- H2_local_all %>%
