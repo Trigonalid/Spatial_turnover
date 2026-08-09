@@ -303,3 +303,72 @@ doc_wilcox_fw <- officer::read_docx() %>%
                         style = "heading 1") %>%
   flextable::body_add_flextable(flextable(wilcox_fw))
 print(doc_wilcox_fw, target = "output/Table_S4b_network_wilcoxon.docx")
+# ------------------------------------------------------------
+# 10. Wilcoxon tests for Fig. S6 (rare-removal) — Word + csv
+# WN interaction dissimilarity, PAIRED signed-rank (matched by site-pair i,j):
+#   (A) BETWEEN networks (Cat-Plant vs Par-Cat) at each dataset level
+#   (B) WITHIN each network, across dataset reductions
+# ------------------------------------------------------------
+type_lab <- c("full" = "All",
+              "common plants only" = "Common plants",
+              "common caterpillars only" = "Common caterpillars")
+
+# general paired WN test between two (network, type) groups, aligned by (i, j)
+wn_paired <- function(net_a, type_a, net_b, type_b, comparison_label) {
+  a <- wn_by_type %>% dplyr::filter(network == net_a, type == type_a) %>%
+    dplyr::select(i, j, va = value)
+  b <- wn_by_type %>% dplyr::filter(network == net_b, type == type_b) %>%
+    dplyr::select(i, j, vb = value)
+  m <- dplyr::inner_join(a, b, by = c("i", "j"))
+  g1 <- paste0(net_a, " (", type_lab[type_a], ")")
+  g2 <- paste0(net_b, " (", type_lab[type_b], ")")
+  if (nrow(m) < 2) {
+    return(tibble(comparison = comparison_label, group_1 = g1, group_2 = g2,
+                  n_pairs = nrow(m), V_statistic = NA_real_,
+                  p_value = NA_character_, significance = NA_character_))
+  }
+  wt <- wilcox.test(m$va, m$vb, paired = TRUE, exact = FALSE)
+  tibble(
+    comparison   = comparison_label,
+    group_1      = g1,
+    group_2      = g2,
+    n_pairs      = nrow(m),
+    V_statistic  = round(wt$statistic, 1),
+    p_value      = fmt_p(wt$p.value),
+    significance = case_when(wt$p.value < 0.001 ~ "***",
+                             wt$p.value < 0.01  ~ "**",
+                             wt$p.value < 0.05  ~ "*",
+                             TRUE               ~ "ns")
+  )
+}
+
+types      <- c("full", "common plants only", "common caterpillars only")
+type_pairs <- list(c("full", "common plants only"),
+                   c("full", "common caterpillars only"),
+                   c("common plants only", "common caterpillars only"))
+
+# (A) between networks, one per dataset level
+between_net <- purrr::map_df(types, function(t)
+  wn_paired("Parasitoid-Caterpillar", t, "Caterpillar-Plant", t,
+            "Between networks"))
+
+# (B) within each network, across dataset reductions
+within_net <- purrr::map_df(c("Parasitoid-Caterpillar", "Caterpillar-Plant"), function(net)
+  purrr::map_df(type_pairs, function(pr)
+    wn_paired(net, pr[1], net, pr[2], paste0("Within ", net))))
+
+wilcox_s6 <- dplyr::bind_rows(between_net, within_net)
+print(wilcox_s6)
+
+write.csv(wilcox_s6, "output/rds/Table_S10_rareremoval_wilcoxon.csv", row.names = FALSE)
+doc_wilcox_s6 <- officer::read_docx() %>%
+  officer::body_add_par(
+    paste("Table S10: Paired Wilcoxon signed-rank tests - effect of removing rare plant and",
+          "caterpillar species on interaction dissimilarity (Fig. S6). Whole-network (WN)",
+          "dissimilarity compared (A) between the parasitoid-caterpillar and caterpillar-plant",
+          "networks at each dataset level, and (B) among dataset reductions (All / Common plants /",
+          "Common caterpillars) within each network. All tests matched by pair of localities.",
+          "V, signed-rank statistic; n_pairs, number of locality pairs; P, two-sided P value."),
+    style = "heading 1") %>%
+  flextable::body_add_flextable(autofit(flextable(wilcox_s6)))
+print(doc_wilcox_s6, target = "output/Table_S10_rareremoval_wilcoxon.docx")

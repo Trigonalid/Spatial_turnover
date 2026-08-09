@@ -280,7 +280,7 @@ gt_table <- lm_table %>%
 
 print(gt_table)
 # Optional export (assign a final table number first):
-# gt::gtsave(gt_table, "output/Table_SX_LMM_spatial_trends.docx")
+gt::gtsave(gt_table, "output/Table_SX_LMM_spatial_trends.docx")
 
 # ------------------------------------------------------------
 # 11. Fig. S3 - spatial regressions (lat + lon)

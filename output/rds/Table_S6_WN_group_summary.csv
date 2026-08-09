@@ -1,0 +1,7 @@
+"network","type","n_pairs","mean","sd","median","IQR","min","max"
+"Caterpillar-Plant","All",28,0.723,0.069,0.736,0.087,0.602,0.842
+"Caterpillar-Plant","Common caterpillars",28,0.597,0.091,0.615,0.116,0.422,0.744
+"Caterpillar-Plant","Common plants",28,0.618,0.061,0.621,0.094,0.508,0.772
+"Parasitoid-Caterpillar","All",28,0.859,0.038,0.854,0.046,0.773,0.923
+"Parasitoid-Caterpillar","Common caterpillars",28,0.845,0.041,0.841,0.046,0.747,0.913
+"Parasitoid-Caterpillar","Common plants",28,0.849,0.044,0.844,0.063,0.758,0.925
