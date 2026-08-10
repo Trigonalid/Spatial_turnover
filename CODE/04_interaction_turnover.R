@@ -15,14 +15,6 @@
 #          and output/rds/ files for the plotting script.
 # Figures are built in 04_interaction_turnover_plots.R
 #   (Fig. 1D, Fig. 2, Fig. S7).
-# ------------------------------------------------------------
-# METHODS NOTES (consistent with 01/02):
-#   - Mantel / distance-decay NOT reported (removed). betalinkr already
-#     returns each site-pair once, so no matrix reconstruction is needed.
-#   - Subsampling: 999 iterations, set.seed(1234), with replacement.
-#   - Decomposition uses the common-denominator variant of betalinkr
-#     (ST + OS = WN), building on the Poisot et al. turnover/rewiring
-#     framework -> check the Methods wording matches this.
 # ============================================================
 
 # ------------------------------------------------------------

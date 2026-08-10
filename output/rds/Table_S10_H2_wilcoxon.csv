@@ -1,3 +1,3 @@
-"variant","comparison","V_statistic","p_value","significance"
-"All species (no threshold)","H2' per locality (paired)",1,"0.021","*"
-"≥5 reared specimens (parasitoids & caterpillars)","H2' per locality (paired)",1,"0.021","*"
+"variant","comparison","W_statistic","p_value","significance"
+"All species (no threshold)","H2' per locality (unpaired)",3,"0.003","**"
+"≥5 reared specimens (parasitoids & caterpillars)","H2' per locality (unpaired)",6,"0.007","**"

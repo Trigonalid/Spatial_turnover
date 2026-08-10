@@ -5,7 +5,7 @@
 #
 # Analysis 7: network-level specialization H2' (Bluthgen, sample-size
 # corrected) per locality, for parasitoid-caterpillar and caterpillar-plant
-# food webs. Paired Wilcoxon across localities. Fig. S10, Table S10.
+# food webs. Wilcoxon rank-sum across localities. Fig. S10, Table S10.
 #
 # Species-inclusion variants (as in Methods):
 #   main        : >= 5 reared specimens -> parasitoids AND caterpillars >= 5
@@ -140,7 +140,7 @@ H2_local_summary <- H2_local_all %>%
 cat("--- H2' per locality (mean +/- SD) ---\n"); print(H2_local_summary); cat("\n")
 
 # ------------------------------------------------------------
-# 7. Paired Wilcoxon signed-rank tests (per variant, across localities)
+# 7. Wilcoxon rank-sum (Mann-Whitney) tests (per variant, across localities)
 # ------------------------------------------------------------
 fmt_p <- function(p) ifelse(is.na(p), NA_character_,
                             ifelse(p < 0.001, "<0.001", formatC(p, format = "f", digits = 3)))
@@ -151,19 +151,19 @@ wilcox_H2 <- H2_local_all %>%
   group_map(function(df, keys) {
     wide <- df %>% pivot_wider(names_from = network, values_from = H2)
     wt <- tryCatch(
-      wilcox.test(wide$`Parasitoid-Caterpillar`, wide$`Caterpillar-Plant`, paired = TRUE, exact = FALSE),
+      wilcox.test(wide$`Parasitoid-Caterpillar`, wide$`Caterpillar-Plant`, paired = FALSE, exact = FALSE),
       error = function(e) NULL)
     if (is.null(wt)) {
-      return(tibble(variant = keys$variant, comparison = "H2' per locality (paired)",
-                    V_statistic = NA_real_, p_value = NA_character_, significance = NA_character_))
+      return(tibble(variant = keys$variant, comparison = "H2' per locality (unpaired)",
+                    W_statistic = NA_real_, p_value = NA_character_, significance = NA_character_))
     }
-    tibble(variant = keys$variant, comparison = "H2' per locality (paired)",
-           V_statistic = round(wt$statistic, 1),
+    tibble(variant = keys$variant, comparison = "H2' per locality (unpaired)",
+           W_statistic = round(unname(wt$statistic), 1),
            p_value = fmt_p(wt$p.value),
            significance = sig_label(wt$p.value))
   }) %>% bind_rows()
 
-cat("--- Paired Wilcoxon (H2', par-cat vs cat-plant) ---\n"); print(wilcox_H2); cat("\n")
+cat("--- Wilcoxon rank-sum (H2', par-cat vs cat-plant) ---\n"); print(wilcox_H2); cat("\n")
 
 # ------------------------------------------------------------
 # 8. Export Table S10 (Word + csv)
@@ -176,6 +176,6 @@ doc_s10 <- officer::read_docx() %>%
   officer::body_add_par("Table S10: Network-level specialization (H2') per locality", style = "heading 1") %>%
   officer::body_add_par("A. Mean H2' (+/- SD) per network and variant", style = "heading 2") %>%
   flextable::body_add_flextable(flextable(H2_local_summary)) %>%
-  officer::body_add_par("B. Paired Wilcoxon signed-rank tests (per variant)", style = "heading 2") %>%
+  officer::body_add_par("B. Wilcoxon rank-sum (Mann-Whitney) tests (per variant)", style = "heading 2") %>%
   flextable::body_add_flextable(flextable(wilcox_H2))
-print(doc_s10, target = "output/Table_S10_specialization.docx")
+print(doc_s10, target = "output/Table_S10_specialization_new.docx")

@@ -203,7 +203,7 @@ saveRDS(rarity_long, "output/rds/rarity_long.rds")
 
 # ------------------------------------------------------------
 # 7. Wilcoxon tests: pairwise rarity-group comparisons
-# per index x dataset combination. PAIRED signed-rank tests: dissimilarity
+# per index x dataset combination. UNPAIRED Wilcoxon rank-sum tests: dissimilarity
 # values are matched by site-pair (Locality_A, Locality_B), since the rarity
 # groups are compared over the same pairs of localities. Statistic is V.
 # (Only site-pairs present in both groups are used -> n_pairs.)
@@ -221,21 +221,21 @@ wilcox_results <- rarity_long %>%
         dplyr::select(Locality_A, Locality_B, value_a = dissimilarity)
       b <- df %>% filter(guild_clean == pair[2]) %>%
         dplyr::select(Locality_A, Locality_B, value_b = dissimilarity)
-      paired_df <- dplyr::inner_join(a, b, by = c("Locality_A", "Locality_B"))
-      if (nrow(paired_df) < 2) {
+      joined_df <- dplyr::inner_join(a, b, by = c("Locality_A", "Locality_B"))
+      if (nrow(joined_df) < 2) {
         return(tibble(index_type = keys$index_type, dataset = keys$dataset,
-                      group_1 = pair[1], group_2 = pair[2], n_pairs = nrow(paired_df),
-                      V_statistic = NA_real_, p_value = NA_character_,
+                      group_1 = pair[1], group_2 = pair[2], n_pairs = nrow(joined_df),
+                      W_statistic = NA_real_, p_value = NA_character_,
                       significance = NA_character_))
       }
-      wt <- wilcox.test(paired_df$value_a, paired_df$value_b, paired = TRUE, exact = FALSE)
+      wt <- wilcox.test(joined_df$value_a, joined_df$value_b, paired = FALSE, exact = FALSE)
       tibble(
         index_type   = keys$index_type,
         dataset      = keys$dataset,
         group_1      = pair[1],
         group_2      = pair[2],
-        n_pairs      = nrow(paired_df),
-        V_statistic  = round(wt$statistic, 1),
+        n_pairs      = nrow(joined_df),
+        W_statistic  = round(unname(wt$statistic), 1),
         p_value      = fmt_p(wt$p.value),
         significance = case_when(
           wt$p.value < 0.001 ~ "***",
@@ -264,7 +264,7 @@ print(doc_summary, target = "output/Table_S3_rarity_summary.docx")
 # Table S3b — Wilcoxon rarity-group comparisons
 write.csv(wilcox_results, "output/rds/Table_S3b_rarity_wilcoxon.csv", row.names = FALSE)
 doc_wilcox <- officer::read_docx() %>%
-  officer::body_add_par("Table S3b: Paired Wilcoxon signed-rank tests - rarity group comparisons",
+  officer::body_add_par("Table S3b: Wilcoxon rank-sum (Mann-Whitney) tests - rarity group comparisons",
                         style = "heading 1") %>%
   flextable::body_add_flextable(flextable(wilcox_results))
 print(doc_wilcox, target = "output/Table_S3b_rarity_wilcoxon.docx")

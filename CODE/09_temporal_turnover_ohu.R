@@ -15,12 +15,6 @@
 # Outputs: Table S6 (Word + csv) + output/rds/ for the plotting script.
 # Figures are built in 09_temporal_turnover_ohu_plots.R (Fig. S6).
 # ------------------------------------------------------------
-# METHODS NOTES:
-#   - MASTER is NOT filtered here: this analysis needs both Ohu1 and Ohu2.
-#   - Subsampling: 999 iterations, set.seed(1234), with replacement.
-#   - Two subsampling schemes: Bray = larger time point down to smaller;
-#     WN = caterpillar-plant down to parasitoid-caterpillar size.
-
 # ============================================================
 
 # ------------------------------------------------------------
