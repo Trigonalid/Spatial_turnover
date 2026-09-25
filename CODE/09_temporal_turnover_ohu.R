@@ -13,7 +13,7 @@
 #            cat-plant subsampled to par-cat size per time point, 999x).
 #
 # Outputs: Table S6 (Word + csv) + output/rds/ for the plotting script.
-# Figures are built in 09_temporal_turnover_ohu_plots.R (Fig. S6).
+# Figures are built in 09_temporal_turnover_ohu_plots.R (Fig. S11).
 # ------------------------------------------------------------
 # ============================================================
 
@@ -200,7 +200,9 @@ plot_data_wn <- bind_rows(
 saveRDS(plot_data_wn, "output/rds/temporal_wn.rds")
 
 # ------------------------------------------------------------
-# 7. Summary tables (Table S6) — Word + csv
+# 7. Summary tables (supplementary, supports Fig. S11 — no separate
+#    numbered table in the manuscript; all values also appear in the
+#    Fig. S11 caption) — Word + csv
 # ------------------------------------------------------------
 summary_bc <- bray_data_all %>%
   group_by(guild, type) %>%
@@ -215,14 +217,14 @@ summary_wn <- plot_data_wn %>%
             sd   = ifelse(n() > 1, round(sd(WN), 3), NA_real_),
             n    = n(), .groups = "drop")
 
-write.csv(summary_bc, "output/rds/Table_S6_bray_communities.csv", row.names = FALSE)
-write.csv(summary_wn, "output/rds/Table_S6_wn_interactions.csv",  row.names = FALSE)
+write.csv(summary_bc, "output/rds/temporal_turnover_bray_communities.csv", row.names = FALSE)
+write.csv(summary_wn, "output/rds/temporal_turnover_wn_interactions.csv",  row.names = FALSE)
 
-doc_s6 <- officer::read_docx() %>%
-  officer::body_add_par("Table S6a: Temporal Bray-Curtis dissimilarity (Ohu)",
+doc_temporal <- officer::read_docx() %>%
+  officer::body_add_par("Supplementary summary: Temporal Bray-Curtis dissimilarity at Ohu (supports Fig. S11a)",
                         style = "heading 1") %>%
   flextable::body_add_flextable(flextable(summary_bc)) %>%
-  officer::body_add_par("Table S6b: Temporal WN interaction dissimilarity (Ohu)",
+  officer::body_add_par("Supplementary summary: Temporal WN interaction dissimilarity at Ohu (supports Fig. S11b)",
                         style = "heading 1") %>%
   flextable::body_add_flextable(flextable(summary_wn))
-print(doc_s6, target = "output/Table_S6_temporal_summary.docx")
+print(doc_temporal, target = "output/Table_temporal_turnover_supplement.docx")

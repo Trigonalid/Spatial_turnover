@@ -1,30 +1,28 @@
 # ============================================================
-# SCRIPT: 04_enemy_free_space.R
+# 11_enemy_free_space.R   >>> ANALYSIS + PLOTS <
+# Study: Approaching the limit of diversity: spatial turnover
+#        amplifies with trophic level (Libra et al.)
 #
-# STUDY:
-#   Approaching the limit of diversity: spatial turnover
-#   amplifies with trophic level
-#   Libra et al.
-#
-# ANALYSES:
+# Analyses:
 #   1. Enemy-free space from all parasitoids combined:
 #      proportion of occupied sites where caterpillar species
-#      had no parasitoid recorded (Fig. S8A)
+#      had no parasitoid recorded (Fig. S8a)
 #   2. Enemy-free space from individual parasitoid species:
 #      proportion of occupied sites where caterpillar species
-#      was free from a specific parasitoid (Fig. S8B)
+#      was free from a specific parasitoid (Fig. S8b)
 #   3. Summary statistics (mean, median) for both metrics
 #   4. Export of raw interaction summary table
 #
-# KEY THRESHOLDS:
+# Key thresholds:
 #   - Only caterpillar species parasitised at least once
 #     across the entire study area are included (n = 127)
 #   - Ohu2 excluded (temporal replicate)
 #
-# AUTHORS: Libra, M., Mottl, O.
-# DATE:    [date]
+# Outputs: output/fig/Figure_S8_enemy_free_space.{svg,pdf,png}
+#          output/Table_S_EFS_raw.xlsx
+#          output/Table_S_EFS_per_cat.xlsx
+#          output/Table_S_EFS_per_pair.xlsx
 # ============================================================
-
 
 # ------------------------------------------------------------
 # 0. Libraries
@@ -67,8 +65,13 @@ theme_pub_black <- theme_classic(base_size = 20) +
 # ------------------------------------------------------------
 
 # Main dataset; Ohu2 excluded (temporal replicate, analysed separately)
-MASTER <- read_excel(here("DATA/MASTER.xlsx")) %>%
+MASTER <- read_excel(here("DATA/MASTER.xlsx"), guess_max = 1048576) %>%
   as_tibble() %>%
+  rename(
+    CAT_sp = CAT_scientific_name,
+    PAR_sp = PAR_species_code
+  ) %>%
+  mutate(PAR_sp = na_if(as.character(PAR_sp), "")) %>%
   dplyr::filter(locality != "Ohu2")
 
 # Keep only caterpillar species that were parasitised at least once

@@ -48,7 +48,7 @@ dir.create("output/fig", showWarnings = FALSE, recursive = TRUE)
 # ------------------------------------------------------------
 # 3. H2' panel (per locality); paired Wilcoxon significance
 # ------------------------------------------------------------
-# Paired stars (par-cat vs cat-plant), matched by locality, to match Table S10
+# Paired stars (par-cat vs cat-plant), matched by locality, to match Table S6
 paired_stars <- function(df) {
   wide <- df %>% pivot_wider(names_from = network, values_from = H2)
   p <- tryCatch(
@@ -97,6 +97,5 @@ save_H2 <- function(variant_name, file_name) {
   p
 }
 
-save_H2("main",         "Figure_S10_specialization")              # MAIN (Fig. S10)
-save_H2("no_threshold", "Figure_S10_specialization_nothreshold")   # robustness
-save_H2("conservative", "Figure_S10_specialization_conservative")  # robustness
+save_H2("\u22655 reared specimens (parasitoids & caterpillars)", "Figure_S7_specialization")            # MAIN (Fig. S7)
+save_H2("All species (no threshold)",                            "Figure_S7_specialization_nothreshold") # robustness

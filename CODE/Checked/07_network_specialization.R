@@ -5,7 +5,7 @@
 #
 # Analysis 7: network-level specialization H2' (Bluthgen, sample-size
 # corrected) per locality, for parasitoid-caterpillar and caterpillar-plant
-# food webs. Wilcoxon rank-sum across localities. Fig. S10, Table S10.
+# food webs. Wilcoxon rank-sum across localities. Fig. S7, Table S6.
 #
 # Species-inclusion variants (as in Methods):
 #   main        : >= 5 reared specimens -> parasitoids AND caterpillars >= 5
@@ -168,14 +168,15 @@ cat("--- Wilcoxon rank-sum (H2', par-cat vs cat-plant) ---\n"); print(wilcox_H2)
 # ------------------------------------------------------------
 # 8. Export Table S10 (Word + csv)
 # ------------------------------------------------------------
-write.csv(H2_local_summary, "output/rds/Table_S10_H2_summary.csv",  row.names = FALSE)
-write.csv(wilcox_H2,        "output/rds/Table_S10_H2_wilcoxon.csv", row.names = FALSE)
-write.csv(H2_local_all,     "output/rds/Table_S10_H2_values.csv",   row.names = FALSE)
 
-doc_s10 <- officer::read_docx() %>%
-  officer::body_add_par("Table S10: Network-level specialization (H2') per locality", style = "heading 1") %>%
-  officer::body_add_par("A. Mean H2' (+/- SD) per network and variant", style = "heading 2") %>%
+write.csv(H2_local_summary, "output/rds/Table_S6_H2_summary.csv",  row.names = FALSE)
+write.csv(wilcox_H2,        "output/rds/Table_S6_H2_wilcoxon.csv", row.names = FALSE)
+write.csv(H2_local_all,     "output/rds/Table_S6_H2_values.csv",   row.names = FALSE)
+
+doc_s6 <- officer::read_docx() %>%
+  officer::body_add_par("Table S6: Network-level specialization (H2') per locality", style = "heading 1") %>%
+  officer::body_add_par("a) Mean H2' (+/- SD) per network and variant", style = "heading 2") %>%
   flextable::body_add_flextable(flextable(H2_local_summary)) %>%
-  officer::body_add_par("B. Wilcoxon rank-sum (Mann-Whitney) tests (per variant)", style = "heading 2") %>%
+  officer::body_add_par("b) Wilcoxon rank-sum (Mann-Whitney) tests (per variant)", style = "heading 2") %>%
   flextable::body_add_flextable(flextable(wilcox_H2))
-print(doc_s10, target = "output/Table_S10_specialization_new.docx")
+print(doc_s6, target = "output/Table_S6_specialization.docx")

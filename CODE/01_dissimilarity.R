@@ -366,9 +366,9 @@ plot_beta_panel <- function(index_name, y_label, tag_letter, ylim_upper = 1.01) 
     theme_pub_black
 }
 
-BC_FIG  <- plot_beta_panel("Bray-Curtis",   "Bray\u2013Curtis dissimilarity",        "A", 1.01)
-CS_FIG  <- plot_beta_panel("Chao-Sorensen", "Chao\u2013S\u00f8rensen dissimilarity", "B", 1.00)
-SOR_FIG <- plot_beta_panel("Sorensen",      "S\u00f8rensen dissimilarity",           "C", 1.00)
+BC_FIG  <- plot_beta_panel("Bray-Curtis",   "Bray\u2013Curtis dissimilarity",        "a", 1.01)
+CS_FIG  <- plot_beta_panel("Chao-Sorensen", "Chao\u2013S\u00f8rensen dissimilarity", "b", 1.00)
+SOR_FIG <- plot_beta_panel("Sorensen",      "S\u00f8rensen dissimilarity",           "c", 1.00)
 
 Fig_S4 <- ggpubr::ggarrange(
   BC_FIG, CS_FIG, SOR_FIG,
@@ -380,6 +380,8 @@ Fig_S4 <- ggpubr::ggarrange(
 ggsave("output/fig/Figure_S4_beta_diversity.pdf",
        Fig_S4, width = 16, height = 10, units = "in")
 ggsave("output/fig/Figure_S4_beta_diversity.png",
+       Fig_S4, width = 16, height = 10, units = "in", dpi = 300)
+ggsave("output/fig/Figure_S4_beta_diversity.svg",
        Fig_S4, width = 16, height = 10, units = "in", dpi = 300)
 
 #----------------------------------------------------------#

@@ -156,23 +156,24 @@ saveRDS(pred_df,      "output/rds/glmm_pred_df.rds")
 saveRDS(glmm_results, "output/rds/glmm_results.rds")
 
 # ------------------------------------------------------------
-# 7. Export tables (csv + Word)
+# 7. Export tables (csv + Word) — Table S11
 # ------------------------------------------------------------
 write.csv(agg_data,            "output/rds/glmm_aggregated_data.csv",  row.names = FALSE)
-write.csv(sample_summary,      "output/rds/glmm_sample_sizes.csv",     row.names = FALSE)
-write.csv(descriptive_summary, "output/rds/glmm_descriptive.csv",      row.names = FALSE)
-write.csv(glmm_results,        "output/rds/glmm_results.csv",          row.names = FALSE)
+write.csv(sample_summary,      "output/rds/Table_S11a_sample_sizes.csv",   row.names = FALSE)
+write.csv(descriptive_summary, "output/rds/Table_S11b_descriptive.csv",    row.names = FALSE)
+write.csv(glmm_results,        "output/rds/Table_S11c_glmm_results.csv",   row.names = FALSE)
 
 doc_pd <- officer::read_docx() %>%
-  officer::body_add_par("Table S: Parasitoid diversity and parasitism rate", style = "heading 1") %>%
-  officer::body_add_par("A. Sample sizes across thresholds", style = "heading 2") %>%
+  officer::body_add_par("Table S11: Local parasitism rate increases with the number of attacking parasitoid species",
+                        style = "heading 1") %>%
+  officer::body_add_par("a) Sample sizes across thresholds", style = "heading 2") %>%
   flextable::body_add_flextable(flextable(sample_summary)) %>%
-  officer::body_add_par("B. Parasitism rate by N_par_species (N_total >= 10)", style = "heading 2") %>%
+  officer::body_add_par("b) Parasitism rate by N_par_species (N_total >= 10)", style = "heading 2") %>%
   flextable::body_add_flextable(flextable(descriptive_summary)) %>%
-  officer::body_add_par("C. GLMM: parasitism ~ N_par_species + log(N_total) + (1|locality) + (1|CAT_sp)",
+  officer::body_add_par("c) GLMM: parasitism ~ N_par_species + log(N_total) + (1|locality) + (1|CAT_sp)",
                         style = "heading 2") %>%
   flextable::body_add_flextable(flextable(glmm_results))
-print(doc_pd, target = "output/Table_S_parasitism_diversity.docx")
+print(doc_pd, target = "output/Table_S11_parasitism_diversity.docx")
 
 # ------------------------------------------------------------
 # 8. Console interpretation

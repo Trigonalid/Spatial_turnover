@@ -118,6 +118,7 @@ Fig_S4 <- ggpubr::ggarrange(
 
 ggsave("output/fig/Figure_S4_beta_diversity.pdf", Fig_S4, width = 16, height = 10, units = "in")
 ggsave("output/fig/Figure_S4_beta_diversity.png", Fig_S4, width = 16, height = 10, units = "in", dpi = 300)
+ggsave("output/fig/Figure_S4_beta_diversity.svg", Fig_S4, width = 16, height = 10, units = "in")
 
 # ============================================================
 # 4. FIGURE 1C — Bray-Curtis only, caterpillars vs. parasitoids

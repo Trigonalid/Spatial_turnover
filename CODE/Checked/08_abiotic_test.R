@@ -192,7 +192,7 @@ figure_maps_violins <-
   (plot_violin("Average temperature (°C)") | plot_violin("Average precipitation (mm yr⁻¹)"))
 
 figure_maps_violins <- figure_maps_violins +
-  plot_annotation(tag_levels = "A",
+  plot_annotation(tag_levels = "a",
                   theme = theme(plot.tag = element_text(size = 20, face = "bold")))
 
 ggsave("output/fig/Figure_S1_climate_maps_violins.svg", figure_maps_violins,
@@ -275,12 +275,12 @@ gt_table <- lm_table %>%
   gt(groupname_col = "variable") %>%
   fmt_number(columns = c(estimate, conf.low, conf.high), decimals = 3) %>%
   cols_label(estimate = "Estimate", conf.low = "CI low", conf.high = "CI high") %>%
-  tab_header(title = "Spatial trends in annual climate variables",
+  tab_header(title = "Table S7: Spatial trends in annual climate variables",
              subtitle = "Linear mixed-effects models (Wald 95% confidence intervals)")
 
 print(gt_table)
-# Optional export (assign a final table number first):
-gt::gtsave(gt_table, "output/Table_SX_LMM_spatial_trends.docx")
+write.csv(lm_table, "output/rds/Table_S7_LMM_spatial_trends.csv", row.names = FALSE)
+gt::gtsave(gt_table, "output/Table_S7_LMM_spatial_trends.docx")
 
 # ------------------------------------------------------------
 # 11. Fig. S3 - spatial regressions (lat + lon)
@@ -332,7 +332,7 @@ figure_regressions <-
      plot_regression("Average precipitation (mm yr⁻¹)", "lon"))
 
 figure_regressions <- figure_regressions +
-  plot_annotation(tag_levels = "A",
+  plot_annotation(tag_levels = "a",
                   theme = theme(plot.tag = element_text(size = 18, face = "bold", color = "black"))) +
   plot_layout(guides = "collect")
 

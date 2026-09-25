@@ -64,6 +64,6 @@ fig_pd <- ggplot(plot_df, aes(x = N_par_species, y = parasitism_rate)) +
        y = "Parasitism rate") +
   theme_pub_black + theme(legend.position = "right")
 
-ggsave("output/fig/Figure_S_parasitism_diversity.svg", fig_pd, width = 11, height = 8, units = "in")
-ggsave("output/fig/Figure_S_parasitism_diversity.pdf", fig_pd, width = 11, height = 8, units = "in")
-ggsave("output/fig/Figure_S_parasitism_diversity.png", fig_pd, width = 11, height = 8, units = "in", dpi = 300)
+ggsave("output/fig/Figure_S10_parasitism_diversity.svg", fig_pd, width = 11, height = 8, units = "in")
+ggsave("output/fig/Figure_S10_parasitism_diversity.pdf", fig_pd, width = 11, height = 8, units = "in")
+ggsave("output/fig/Figure_S10_parasitism_diversity.png", fig_pd, width = 11, height = 8, units = "in", dpi = 300)

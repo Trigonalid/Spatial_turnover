@@ -224,7 +224,7 @@ wilcox_results <- rarity_long %>%
                       W_statistic = NA_real_, p_value = NA_character_,
                       significance = NA_character_))
       }
-      wt <- wilcox.test(joined_df$value_a, joined_df$value_b, paired = FALSE, exact = FALSE)
+      wt <- wilcox.test(joined_df$value_a, joined_df$value_b, paired = TRUE, exact = FALSE)
       tibble(
         index_type   = keys$index_type,
         dataset      = keys$dataset,
@@ -249,7 +249,9 @@ print(wilcox_results)
 # ------------------------------------------------------------
 # 8. Export tables (Word + csv)
 # ------------------------------------------------------------
+# ------------------------------------------------------------
 # Table S3 — summary of dissimilarity indices by rarity group
+# ------------------------------------------------------------
 write.csv(summary_table, "output/rds/Table_S3_rarity_summary.csv", row.names = FALSE)
 doc_summary <- officer::read_docx() %>%
   officer::body_add_par("Table S3: Summary of dissimilarity indices by rarity group",
@@ -257,10 +259,12 @@ doc_summary <- officer::read_docx() %>%
   flextable::body_add_flextable(flextable(summary_table))
 print(doc_summary, target = "output/Table_S3_rarity_summary.docx")
 
-# Table S3b — Wilcoxon rarity-group comparisons
-write.csv(wilcox_results, "output/rds/Table_S3b_rarity_wilcoxon.csv", row.names = FALSE)
+# ------------------------------------------------------------
+# Table S10 — Paired Wilcoxon signed-rank tests, rarity-group comparisons
+# ------------------------------------------------------------
+write.csv(wilcox_results, "output/rds/Table_S10_rarity_wilcoxon.csv", row.names = FALSE)
 doc_wilcox <- officer::read_docx() %>%
-  officer::body_add_par("Table S3b: Wilcoxon rank-sum (Mann-Whitney) tests - rarity group comparisons",
+  officer::body_add_par("Table S10: Paired Wilcoxon signed-rank tests - rarity group comparisons",
                         style = "heading 1") %>%
   flextable::body_add_flextable(flextable(wilcox_results))
-print(doc_wilcox, target = "output/Table_S3b_rarity_wilcoxon_NEW.docx")
+print(doc_wilcox, target = "output/Table_S10_rarity_wilcoxon.docx")
