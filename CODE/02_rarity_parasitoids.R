@@ -18,10 +18,6 @@
 #          and output/rds/rarity_long.rds for the plotting script.
 # Figures are built separately in 02_rarity_parasitoids_plots.R (Fig. S5).
 # ------------------------------------------------------------
-# METHODS NOTES (consistent with 01):
-#   - Bray-Curtis via {vegan}; Mantel / distance-decay NOT reported.
-#   - Each site-pair counted once (upper triangle of the matrix).
-# ============================================================
 
 # ------------------------------------------------------------
 # 0. Libraries
@@ -107,7 +103,7 @@ MASTER_common_cats   <- MASTER %>% filter(common_caterpillar == TRUE)
 # Rows = localities (aligned to site_levels), columns = parasitoid species.
 build_para_matrix <- function(data) {
   mat <- as.matrix(table(data$locality, data$PAR_sp))
-  
+
   missing <- setdiff(site_levels, rownames(mat))
   if (length(missing) > 0) {
     empty <- matrix(0, nrow = length(missing), ncol = ncol(mat),
@@ -133,7 +129,7 @@ compute_dissimilarity <- function(mat, method) {
 # Returns a long-format data frame (upper triangle) + a summary row.
 # ------------------------------------------------------------
 run_analysis <- function(data, group_label, dataset_label, method) {
-  
+
   par_data <- data %>% filter(!is.na(PAR_sp))
   if (group_label == "Common") {
     par_data <- par_data %>% filter(par_rarity == "Common")
@@ -141,10 +137,10 @@ run_analysis <- function(data, group_label, dataset_label, method) {
     par_data <- par_data %>% filter(par_rarity == "Rare")
   }
   # "All" uses unfiltered par_data
-  
+
   mat  <- build_para_matrix(par_data)
   dmat <- compute_dissimilarity(mat, method)
-  
+
   # Long format: keep upper triangle only -> each site-pair once
   dmat[lower.tri(dmat, diag = TRUE)] <- NA
   long <- reshape2::melt(dmat,
@@ -159,7 +155,7 @@ run_analysis <- function(data, group_label, dataset_label, method) {
       dataset     = dataset_label,
       index_type  = method
     )
-  
+
   summary <- tibble(
     index_type         = method,
     dataset            = dataset_label,
@@ -168,7 +164,7 @@ run_analysis <- function(data, group_label, dataset_label, method) {
     sd_dissimilarity   = round(sd(long$dissimilarity),   3),
     n_species          = ncol(mat)
   )
-  
+
   list(long = long, summary = summary)
 }
 
@@ -203,7 +199,7 @@ saveRDS(rarity_long, "output/rds/rarity_long.rds")
 
 # ------------------------------------------------------------
 # 7. Wilcoxon tests: pairwise rarity-group comparisons
-# per index x dataset combination. UNPAIRED Wilcoxon rank-sum tests: dissimilarity
+# per index x dataset combination. PAIRED Wilcoxon rank-sum tests: dissimilarity
 # values are matched by site-pair (Locality_A, Locality_B), since the rarity
 # groups are compared over the same pairs of localities. Statistic is V.
 # (Only site-pairs present in both groups are used -> n_pairs.)
@@ -225,10 +221,10 @@ wilcox_results <- rarity_long %>%
       if (nrow(joined_df) < 2) {
         return(tibble(index_type = keys$index_type, dataset = keys$dataset,
                       group_1 = pair[1], group_2 = pair[2], n_pairs = nrow(joined_df),
-                      W_statistic = NA_real_, p_value = NA_character_,
+                      V_statistic = NA_real_, p_value = NA_character_,
                       significance = NA_character_))
       }
-      wt <- wilcox.test(joined_df$value_a, joined_df$value_b, paired = FALSE, exact = FALSE)
+      wt <- wilcox.test(joined_df$value_a, joined_df$value_b, paired = TRUE, exact = FALSE)
       tibble(
         index_type   = keys$index_type,
         dataset      = keys$dataset,
@@ -253,7 +249,9 @@ print(wilcox_results)
 # ------------------------------------------------------------
 # 8. Export tables (Word + csv)
 # ------------------------------------------------------------
+# ------------------------------------------------------------
 # Table S3 — summary of dissimilarity indices by rarity group
+# ------------------------------------------------------------
 write.csv(summary_table, "output/rds/Table_S3_rarity_summary.csv", row.names = FALSE)
 doc_summary <- officer::read_docx() %>%
   officer::body_add_par("Table S3: Summary of dissimilarity indices by rarity group",
@@ -261,10 +259,12 @@ doc_summary <- officer::read_docx() %>%
   flextable::body_add_flextable(flextable(summary_table))
 print(doc_summary, target = "output/Table_S3_rarity_summary.docx")
 
-# Table S3b — Wilcoxon rarity-group comparisons
-write.csv(wilcox_results, "output/rds/Table_S3b_rarity_wilcoxon.csv", row.names = FALSE)
+# ------------------------------------------------------------
+# Table S10 — Paired Wilcoxon signed-rank tests, rarity-group comparisons
+# ------------------------------------------------------------
+write.csv(wilcox_results, "output/rds/Table_S10_rarity_wilcoxon.csv", row.names = FALSE)
 doc_wilcox <- officer::read_docx() %>%
-  officer::body_add_par("Table S3b: Wilcoxon rank-sum (Mann-Whitney) tests - rarity group comparisons",
+  officer::body_add_par("Table S10: Paired Wilcoxon signed-rank tests - rarity group comparisons",
                         style = "heading 1") %>%
   flextable::body_add_flextable(flextable(wilcox_results))
-print(doc_wilcox, target = "output/Table_S3b_rarity_wilcoxon.docx")
+print(doc_wilcox, target = "output/Table_S10_rarity_wilcoxon.docx")

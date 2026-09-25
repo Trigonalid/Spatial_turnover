@@ -27,14 +27,13 @@ library(officer)     # read_docx() for Word export
 # ------------------------------------------------------------
 # MASTER: one row = one rearing event (caterpillar + plant + optional parasitoid).
 # Excel columns are renamed to the short codes used below.
-# guild = "PAR" where PAR_sp is present; otherwise "CAT".
+# guild is already present in MASTER (values "PAR" / "CAT") - not recreated here.
 # Ohu2 excluded (temporal replicate, handled in a separate script).
-
 MASTER <- read_excel(
-  here("DATA/MASTER.xlsx"),
-  guess_max = 1048576    # scan ALL rows when guessing column types.
-) %>%                    # PAR_species_code is sparse; with the default guess it
-  # was typed as logical and its text codes coerced to NA.
+    here("DATA/MASTER.xlsx"),
+    guess_max = 1048576    # scan ALL rows when guessing column types.
+  ) %>%                    # PAR_species_code is sparse; with the default guess it
+                           # was typed as logical and its text codes coerced to NA.
   as_tibble() %>%
   rename(
     PLANT_sp = PLANT_species_code,
@@ -42,15 +41,18 @@ MASTER <- read_excel(
     PAR_sp   = PAR_species_code
   ) %>%
   mutate(
-    PAR_sp = na_if(as.character(PAR_sp), ""),   # ensure character; empty -> NA
-    guild  = if_else(!is.na(PAR_sp), "PAR", "CAT")
-  ) %>%
+    PAR_sp = na_if(as.character(PAR_sp), "")    # ensure character; empty -> NA
+  ) %>%                                          # NOTE: guild already exists in MASTER
   filter(locality != "Ohu2")
 
 # Create output directories if missing
 dir.create("output",     showWarnings = FALSE, recursive = TRUE)
 dir.create("output/rds", showWarnings = FALSE, recursive = TRUE)
 
+# NOTE: geographic distances (Distance.csv) were only needed for Mantel,
+# which is no longer reported. Loading kept commented out in case a
+# distance-decay analysis is added later.
+# Distance <- read.csv2(here("DATA/Distance.csv"), row.names = 1)
 
 # ------------------------------------------------------------
 # 2. Community matrices (site x species)
@@ -69,9 +71,9 @@ cat_matrix_PA <- (cat_matrix > 0) * 1L     # presence/absence for Sorensen
 # Melt a dissimilarity matrix to long format, keeping the UPPER triangle
 # only (no diagonal) -> each site-pair appears exactly once.
 matrix_to_long <- function(mat, guild_name, index_name) {
-  
+
   mat[lower.tri(mat, diag = TRUE)] <- NA   # drops self-pairs and duplicate B-A
-  
+
   reshape2::melt(mat, varnames = c("Locality_A", "Locality_B"),
                  value.name = "dissimilarity") %>%
     as_tibble() %>%
@@ -113,8 +115,7 @@ wilcox_bc <- wilcox.test(BC_par$dissimilarity, BC_cat$dissimilarity); print(wilc
 
 # ============================================================
 # 5. CHAO-SORENSEN DISSIMILARITY
-# Corrects for unsampled rare species. {CommEcol} dis.chao().
-# 56% of parasitoid species were singletons or doubletons.
+# Corrects for unsampled rare species. {CommEcol} dis.chao()
 # ============================================================
 cs_para <- CommEcol::dis.chao(para_matrix, index = "sorensen", version = "rare") %>% as.matrix()
 cs_cat  <- CommEcol::dis.chao(cat_matrix,  index = "sorensen", version = "rare") %>% as.matrix()
@@ -164,23 +165,23 @@ res_cs  <- vector("list", n_rand)
 res_sor <- vector("list", n_rand)
 
 for (i in seq_len(n_rand)) {
-  
+
   # Resample caterpillar rows at each site to the target N (with replacement)
   resampled <- purrr::map_df(site_levels, function(loc) {
     N_target <- n_par_per_site %>% filter(locality == loc) %>% pull(N)
     if (length(N_target) == 0 || is.na(N_target) || N_target == 0) return(tibble())
     MASTER %>% filter(locality == loc) %>% sample_n(size = N_target, replace = TRUE)
   })
-  
-  # Wide abundance matrix; rows forced to canonical order (crucial for averaging!)
+
+  # Wide abundance matrix; rows forced to canonical order
   df_wide <- resampled %>%
     count(locality, CAT_sp) %>%
     pivot_wider(names_from = CAT_sp, values_from = n, values_fill = 0) %>%
     column_to_rownames("locality")
   df_wide <- df_wide[site_levels, , drop = FALSE]
-  
+
   df_pa <- (df_wide > 0) * 1L
-  
+
   res_bc[[i]]  <- vegan::vegdist(df_wide, method = "bray") %>% as.matrix()
   res_cs[[i]]  <- CommEcol::dis.chao(df_wide, index = "sorensen", version = "rare") %>% as.matrix()
   res_sor[[i]] <- betapart::beta.pair(df_pa)$beta.sor %>% as.matrix()
@@ -197,7 +198,7 @@ bc_sub_mean  <- mean_matrix(res_bc)
 cs_sub_mean  <- mean_matrix(res_cs)
 sor_sub_mean <- mean_matrix(res_sor)
 
-# Assign locality names to the averaged matrices (directly, not via loop copies!)
+# Assign locality names to the averaged matrices
 loc_names <- site_levels
 dimnames(bc_sub_mean)  <- list(loc_names, loc_names)
 dimnames(cs_sub_mean)  <- list(loc_names, loc_names)
@@ -237,4 +238,50 @@ doc <- officer::read_docx() %>%
   officer::body_add_par("Table S2: Summary of dissimilarity indices",
                         style = "heading 1") %>%
   flextable::body_add_flextable(ft)
-print(doc, target = "output/Table_S2_dissimilarity_summary.docx")
+print(doc, target = "output/Table_S2_dissimilarity_summary_new.docx")
+
+# ============================================================
+# 10. WILCOXON TABLE — species spatial turnover (unpaired)
+#     Three comparisons per index (parallels rarity S3b / network S4b):
+#       Parasitoids vs Caterpillars
+#       Parasitoids vs Caterpillars-subsampled
+#       Caterpillars vs Caterpillars-subsampled
+# ============================================================
+fmt_p <- function(p) ifelse(is.na(p), NA_character_,
+                            ifelse(p < 0.001, "<0.001", formatC(p, format = "f", digits = 3)))
+
+wilcox_pairs <- list(
+  c("Parasitoids",  "Caterpillars"),
+  c("Parasitoids",  "Caterpillars-subsampled"),
+  c("Caterpillars", "Caterpillars-subsampled")
+)
+indices_vec <- c("Bray-Curtis", "Chao-Sorensen", "Sorensen")
+
+wilcox_species <- dplyr::bind_rows(lapply(indices_vec, function(idx) {
+  dplyr::bind_rows(lapply(wilcox_pairs, function(pr) {
+    a <- turnover_long %>% dplyr::filter(index == idx, guild == pr[1]) %>%
+      dplyr::select(Locality_A, Locality_B, va = dissimilarity)
+    b <- turnover_long %>% dplyr::filter(index == idx, guild == pr[2]) %>%
+      dplyr::select(Locality_A, Locality_B, vb = dissimilarity)
+    m <- dplyr::inner_join(a, b, by = c("Locality_A", "Locality_B"))
+    if (nrow(m) < 2) {
+      return(data.frame(index = idx, group_1 = pr[1], group_2 = pr[2],
+                        n_pairs = nrow(m), W_statistic = NA_real_,
+                        p_value = NA_character_, stringsAsFactors = FALSE))
+    }
+    wt <- wilcox.test(m$va, m$vb, paired = FALSE, exact = FALSE)
+    data.frame(index = idx, group_1 = pr[1], group_2 = pr[2],
+               n_pairs = nrow(m),
+               W_statistic = round(unname(wt$statistic), 1),
+               p_value = fmt_p(wt$p.value), stringsAsFactors = FALSE)
+  }))
+}))
+
+print(wilcox_species)
+write.csv(wilcox_species, "output/rds/Table_S2b_species_wilcoxon.csv", row.names = FALSE)
+
+doc_w <- officer::read_docx() %>%
+  officer::body_add_par("Table S2b: Wilcoxon rank-sum (Mann-Whitney) tests - species spatial turnover",
+                        style = "heading 1") %>%
+  flextable::body_add_flextable(autofit(flextable(wilcox_species)))
+print(doc_w, target = "output/Table_S2b_species_wilcoxon_new.docx")

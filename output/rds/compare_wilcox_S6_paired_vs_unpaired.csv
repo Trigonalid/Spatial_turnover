@@ -1,7 +1,0 @@
-"network","dataset_1","dataset_2","n_pairs","mean_1","mean_2","delta_mean","V_paired","p_paired","sig_paired","W_unpaired","p_unpaired","sig_unpaired","flips"
-"Parasitoid-Caterpillar","All","Common plants",28,0.859,0.849,0.01,321,0.00746,"**",443,0.408,"ns","<< FLIP"
-"Parasitoid-Caterpillar","All","Common caterpillars",28,0.859,0.845,0.014,406,4e-06,"***",478,0.161,"ns","<< FLIP"
-"Parasitoid-Caterpillar","Common plants","Common caterpillars",28,0.849,0.845,0.004,231,0.531,"ns",406.5,0.819,"ns",""
-"Caterpillar-Plant","All","Common plants",28,0.723,0.618,0.105,403,5.55e-06,"***",677.5,3.01e-06,"***",""
-"Caterpillar-Plant","All","Common caterpillars",28,0.723,0.597,0.125,406,4e-06,"***",675,3.67e-06,"***",""
-"Caterpillar-Plant","Common plants","Common caterpillars",28,0.618,0.597,0.02,242,0.381,"ns",427,0.572,"ns",""

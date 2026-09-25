@@ -1,7 +1,0 @@
-"variant","network","n_localities","H2_mean","H2_sd"
-"full","Caterpillar-Plant",8,0.843,0.045
-"full","Parasitoid-Caterpillar",8,0.699,0.098
-"min5_cons","Caterpillar-Plant",8,0.842,0.045
-"min5_cons","Parasitoid-Caterpillar",8,0.715,0.098
-"min5_both","Caterpillar-Plant",8,0.842,0.045
-"min5_both","Parasitoid-Caterpillar",8,0.715,0.098

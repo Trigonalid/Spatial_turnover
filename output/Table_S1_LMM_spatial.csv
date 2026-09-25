@@ -1,9 +1,0 @@
-"variable","term","estimate","conf.low","conf.high"
-"Minimum temperature (°C)","Latitude (standardised)",0.279,-0.082,0.64
-"Minimum temperature (°C)","Longitude (standardised)",-0.018,-0.379,0.343
-"Maximum temperature (°C)","Latitude (standardised)",0.278,-0.339,0.895
-"Maximum temperature (°C)","Longitude (standardised)",0.139,-0.478,0.755
-"Average temperature (°C)","Latitude (standardised)",0.279,-0.048,0.605
-"Average temperature (°C)","Longitude (standardised)",0.06,-0.266,0.387
-"Average precipitation (mm month⁻¹)","Latitude (standardised)",-57.132,-65.633,-48.63
-"Average precipitation (mm month⁻¹)","Longitude (standardised)",-39.944,-48.446,-31.443

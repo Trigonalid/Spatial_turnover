@@ -1,7 +1,0 @@
-"network","metric","dataset_1","dataset_2","n_1","n_2","W_statistic","p_value","significance"
-"Parasitoid-Caterpillar","WN","All","Common plants",28,28,443,"0.408","ns"
-"Parasitoid-Caterpillar","WN","All","Common caterpillars",28,28,478,"0.161","ns"
-"Parasitoid-Caterpillar","WN","Common plants","Common caterpillars",28,28,406.5,"0.819","ns"
-"Caterpillar-Plant","WN","All","Common plants",28,28,677.5,"<0.001","***"
-"Caterpillar-Plant","WN","All","Common caterpillars",28,28,675,"<0.001","***"
-"Caterpillar-Plant","WN","Common plants","Common caterpillars",28,28,427,"0.572","ns"
