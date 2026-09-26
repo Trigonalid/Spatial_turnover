@@ -1,9 +1,0 @@
-"variable","term","estimate","CI_low_Wald","CI_high_Wald","CI_width_Wald","df","p_value","CI_low_Satt","CI_high_Satt","CI_width_Satt","CI_width_diff_pct","sig_change"
-"Minimum temperature (°C)","lat_z",0.0644,-0.0604,0.1892,0.2497,5,0.4603,-0.1427,0.2715,0.4142,65.9,FALSE
-"Minimum temperature (°C)","lon_z",-0.0495,-0.1743,0.0754,0.2497,5,0.566,-0.2566,0.1576,0.4142,65.9,FALSE
-"Maximum temperature (°C)","lat_z",0.0062,-0.0596,0.072,0.1316,5,0.8901,-0.103,0.1154,0.2184,66,FALSE
-"Maximum temperature (°C)","lon_z",-0.0607,-0.1265,0.0051,0.1316,5,0.2125,-0.1698,0.0485,0.2184,66,FALSE
-"Average temperature (°C)","lat_z",0.0367,-0.0459,0.1192,0.1651,5,0.5219,-0.1002,0.1736,0.2738,65.8,FALSE
-"Average temperature (°C)","lon_z",-0.0542,-0.1367,0.0283,0.1651,5,0.3554,-0.1911,0.0827,0.2738,65.8,FALSE
-"Average precipitation (mm yr⁻¹)","lat_z",-122.8156,-248.2696,2.6384,250.9081,5,0.1897,-330.9424,85.3112,416.2536,65.9,FALSE
-"Average precipitation (mm yr⁻¹)","lon_z",-23.9654,-149.4194,101.4887,250.9081,5,0.7791,-232.0922,184.1614,416.2536,65.9,FALSE
